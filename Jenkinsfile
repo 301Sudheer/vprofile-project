@@ -15,5 +15,12 @@ pipeline {
                 }
             }
         }
+ stage("Test") {
+            steps {
+                script {
+                    sh 'mvn test'
+                }
+            }
+        }
     } // Closing stages block
 } // Closing pipeline block
