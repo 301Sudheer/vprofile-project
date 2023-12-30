@@ -23,3 +23,5 @@ pipeline {
                 }
             }
         }
+    } // Closing stages block
+} // Closing pipeline block
