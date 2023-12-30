@@ -4,40 +4,47 @@ pipeline {
         maven 'maven3'
     }
     environment {
-        version = '1.0.0' // Set your version here
+        version = ''
     }
     stages {
+        stage('Read POM') {
+            steps {
+                script {
+                    def pom = readMavenPom file: 'pom.xml'
+                    version = pom.version
+                    echo "Project version is: ${version}"
+                }
+            }
+        }
         stage("Build Artifact") {
             steps {
                 script {
-                    def mvnCmd = 'mvn clean package -DskipTests'
-                    def mvnOutput = sh(script: mvnCmd, returnStdout: true).trim()
-                    echo "Maven Output: ${mvnOutput}"
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        stage("Test") {
+            steps {
+                script {
+                    sh 'mvn test'
+                }
+            }
+        }
+        stage("Upload Artifact s3") {
+            steps {
+                script {
+                    sh "aws s3 cp target/vprofile-${version}.war s3://vprofile-artifacts1/vprofile-${version}.war"
                 }
             }
         }
         stage('Deploy') {
-            steps {
-                script {
-                    try {
-                        sshagent(credentials: ['ubuntu']) {
-                            def remoteCommands = [
-                                "sudo mv ~/vprofile-v1.war /var/lib/tomcat9/webapps/",
-                                "sudo systemctl restart tomcat9"
-                            ]
-                            remoteCommands.each { command ->
-                                sh "ssh ubuntu@100.25.35.77 '${command}'"
-                            }
-                        }
-                    } catch (Exception e) {
-                        echo "Deployment failed: ${e.message}"
-                        currentBuild.result = 'FAILURE'
-                        throw e
-                    }
-                }
+        steps {
+            sshagent(credentials: ['ubuntu']) {
+                
+                sh "ssh ubuntu@3.110.159.232 'sudo mv ~/vprofile-v1.war /var/lib/tomcat9/webapps/'"
+                sh "ssh ubuntu@3.110.159.232 'sudo systemctl restart tomcat9'"
             }
         }
-    } // Closing stages block
-} // Closing pipeline block
-
-
+    }
+    }
+}
