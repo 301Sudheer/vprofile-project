@@ -23,28 +23,3 @@ pipeline {
                 }
             }
         }
-        stage("Test") {
-            steps {
-                script {
-                    sh 'mvn test'
-                }
-            }
-        }
-        stage("Upload Artifact s3") {
-            steps {
-                script {
-                    sh "aws s3 cp target/vprofile-${version}.war s3://automatio999/vprofile-artifacts/vprofile-${version}.war"
-                }
-            }
-        }
-        stage('Deploy') {
-        steps {
-            sshagent(credentials: ['ubuntu']) {
-                
-                sh "ssh ubuntu@100.25.35.77 'sudo mv ~/vprofile-v1.war /var/lib/tomcat9/webapps/'"
-                sh "ssh ubuntu@100.25.35.77 'sudo systemctl restart tomcat9'"
-            }
-        }
-    }
-    }
-}
